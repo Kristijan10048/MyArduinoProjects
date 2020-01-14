@@ -1,0 +1,28 @@
+//Room Temperature Monitor
+//T.K.Hareendran
+#include <LiquidCrystal.h> // Include the library to use a LCD display
+#define tempSensor 0 // Define the A0 pin as “sensor”
+int Vin; // Variable to read the value from the Arduino’s pin A0
+float TC; // Variable that receives the converted voltage value to ºCtemperature
+float TF; // Variable to receive the converted value from ºC to ºF
+LiquidCrystal lcd (7, 8, 9, 10, 11, 12);
+/* The function above declares which Arduino’s pins will be used for controlling the LCD */
+void setup()
+{
+   lcd.begin(16, 2); // It tells the Arduino that the display is a 16x2 type
+   lcd.print("-Temperature-"); // Send the text to the screen of the display.
+}
+void loop()
+{
+   Vin = analogRead (tempSensor); /* Tells the Arduino to read A0 and stores the value in “Vin” */
+   TC=(500.0*Vin)/1023.0; /* Converts the voltage value into temperature and stores it into the “TC” variable (in ºC)*/
+   TF = ((9.0*TC)/5.0)+32.0; // Converts ºC to ºF
+   lcd.setCursor(0, 1); // Moves the cursor of the display to the next line
+   lcd.print(TF); // Exhibits the value of the temperature on the display
+   lcd.print((char)223); //degree symbol
+   lcd.print("F "); // Writes “F” to indicate that it is in Fahrenheit scale.
+   lcd.print (TC);
+   lcd.print((char)223);// degree symbol
+   lcd.print("C"); // Writes “C” to indicate that it is in Centigrade scale.
+   delay(1000); // Waits for one second to read the sensor pin again
+}
