@@ -1,90 +1,151 @@
-/*
-Library examples for TM1638.
-
-Copyright (C) 2011 Ricardo Batista <rjbatista at gmail dot com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the version 3 GNU General Public License as
-published by the Free Software Foundation.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include <TM1638.h>
 #include <TM1638QYF.h>
+#include "Joystick.h"
+
+Joystick_ Joystick(
+  JOYSTICK_DEFAULT_REPORT_ID, 
+  JOYSTICK_TYPE_MULTI_AXIS, 32, 0,
+  true, true, false, false, false, false,
+  true, true, false, false, false);
+
+
 
 TM1638QYF module(8, 9, 10);
 word mode;
 
-unsigned long startTime;
+//int pushBtn = 0;
+int currVal = -1;
+const int C_INT_MAX_VAL = 9999;
 
-void setup() {
-  startTime = millis();
 
+
+void setup() 
+{
+  //init joystic lib
+  Joystick.begin();
+
+  //init  QYF module 
   module.setupDisplay(true, 7);
   mode = 0;
 }
 
-void update(TM1638QYF* module, word* mode) {
-  word buttons = module->getButtons();
-  unsigned long runningSecs = (millis() - startTime) / 1000;
+void SingleButtonPush(byte button)
+{
+    Joystick.pressButton(button);
+    delay(500);
+    Joystick.releaseButton(button ); 
+}
 
-  // button pressed - change mode
-  if (buttons != 0) {
-    *mode = buttons >> 1;
-
-    if (*mode < 128) {
-      module->clearDisplay();
-      delay(100);
-    }
+void AppendNumercValue(int param)
+{
+  if(currVal < 0 )
+  {
+    currVal = param;
+    return ;
+  } 
+  
+  if(currVal > C_INT_MAX_VAL)
+  {
+     currVal = param;
+     return ;
   }
 
-  switch (*mode) {
-    case 0:
-      module->setDisplayToDecNumber(runningSecs, 1 << 6);
-      break;
-    case 1:
-      module->setDisplayToDecNumber(runningSecs, 1 << 5, false);
-      break;
-    case 2:
-      module->setDisplayToHexNumber(runningSecs, 1 << 4);
-      break;
-    case 4:
-      module->setDisplayToHexNumber(runningSecs, 1 << 3, false);
-      break;
-    case 8:
-      module->setDisplayToBinNumber(runningSecs, 1 << 2);
-      break;
-    case 16:
-      char s[9];
-      sprintf(s, "Secs %03d", runningSecs % 999);
-      module->setDisplayToString(s, 1 << 1);
-      break;
-    case 32:
-      if (runningSecs % 2 == 0) {
-        module->setDisplayToString("TM1638QY", 1);
-      } else {
-        module->setDisplayToString(String("LIBRARY "), 1);
-      }
+  int newVal = (currVal * 10) + param;
+  if(newVal < C_INT_MAX_VAL )
+    currVal = newVal;
+  else
+    currVal = param;
+}
 
-      break;
-    case 64:
-      module->setDisplayToError();
-      break;
-    case 128:
-      module->setDisplayToDecNumber(*mode, 0);
-      break;
-    case 256:
-      module->setDisplayToString("ABCDE", 1 << (runningSecs % 8));
-      break;
-    default:
-      module->setDisplayToBinNumber(buttons & 0xF, buttons >> 8);
+void PushBtnAndDisplayIt(TM1638QYF* module, byte buttonNo)
+{
+  
+   AppendNumercValue(buttonNo);          
+   module->setDisplayToDecNumber(currVal, 1 << 6);
+
+   //send button push
+   if(buttonNo == 0)
+    SingleButtonPush(10);
+   else
+    SingleButtonPush(buttonNo -1);
+}
+
+void update(TM1638QYF* module, word* mode) 
+{
+  //get buttons state  
+  word buttons = module->getButtons();  
+
+  // button pressed - change mode
+  if (buttons != 0) 
+  {
+    Serial.print("Button:");
+    Serial.print(buttons);
+    Serial.print("\n");
+       
+    *mode = buttons >> 1;
+    Serial.print("Mode :");
+    Serial.print(*mode);
+    Serial.print("\n curValue");
+    Serial.print(currVal);
+     switch (*mode) 
+     {
+        //button 1
+          case 0: 
+            PushBtnAndDisplayIt(module, 1);
+          break;
+            
+          //button 2
+          case 1:
+            PushBtnAndDisplayIt(module, 2);            
+            break;
+            
+          //button 3
+          case 2:
+            PushBtnAndDisplayIt(module, 3);            
+            break;
+            //empty
+          case 4:                 
+            break;
+
+            //button 4
+          case 8:
+              PushBtnAndDisplayIt(module, 4);            
+            break;
+
+            //button 5
+          case 16:
+             PushBtnAndDisplayIt(module, 5);      
+            break;
+            
+            //button 6
+          case 32:
+              PushBtnAndDisplayIt(module, 6);
+            break;
+          case 64:            
+            break;
+
+             //button 7
+          case 128:
+             PushBtnAndDisplayIt(module, 7);     
+            break;
+
+             //button 8
+          case 256:
+             PushBtnAndDisplayIt(module, 8);       
+            break;
+            
+             //button 9
+          case 512:
+             PushBtnAndDisplayIt(module, 9);       
+            break;
+
+             //button 9
+          case 4096:
+             PushBtnAndDisplayIt(module, 0);       
+            break; 
+          default:
+            break;
+     }
   }
 }
 
