@@ -4,13 +4,15 @@
 
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID, 
-  JOYSTICK_TYPE_MULTI_AXIS, 32, 0,
+  JOYSTICK_TYPE_MULTI_AXIS, 16, 0,
   true, true, false, false, false, false,
   true, true, false, false, false);
 
+#define DIO 8
+#define CLK 9
+#define STB 10
 
-
-TM1638QYF module(8, 9, 10);
+TM1638QYF module(DIO, CLK, STB);
 word mode;
 
 //int pushBtn = 0;
@@ -27,6 +29,10 @@ void setup()
   //init  QYF module 
   module.setupDisplay(true, 7);
   mode = 0;
+
+  module.setDisplayToString("BIT", 1);
+  delay(2500);
+  module.setDisplayToDecNumber(0, 1);
 }
 
 void SingleButtonPush(byte button)
@@ -51,7 +57,7 @@ void AppendNumercValue(int param)
   }
 
   int newVal = (currVal * 10) + param;
-  if(newVal < C_INT_MAX_VAL )
+  if(newVal <= C_INT_MAX_VAL )
     currVal = newVal;
   else
     currVal = param;
@@ -61,7 +67,7 @@ void PushBtnAndDisplayIt(TM1638QYF* module, byte buttonNo)
 {
   
    AppendNumercValue(buttonNo);          
-   module->setDisplayToDecNumber(currVal, 1 << 6);
+   module->setDisplayToDecNumber(currVal, 1 << 4);
 
    //send button push
    if(buttonNo == 0)
@@ -78,15 +84,15 @@ void update(TM1638QYF* module, word* mode)
   // button pressed - change mode
   if (buttons != 0) 
   {
-    Serial.print("Button:");
-    Serial.print(buttons);
-    Serial.print("\n");
+    //Serial.print("Button:");
+    //Serial.print(buttons);
+    //Serial.print("\n");
        
     *mode = buttons >> 1;
-    Serial.print("Mode :");
-    Serial.print(*mode);
-    Serial.print("\n curValue");
-    Serial.print(currVal);
+    //Serial.print("Mode :");
+    //Serial.print(*mode);
+    //Serial.print("\n curValue");
+    //Serial.print(currVal);
      switch (*mode) 
      {
         //button 1
@@ -143,6 +149,20 @@ void update(TM1638QYF* module, word* mode)
           case 4096:
              PushBtnAndDisplayIt(module, 0);       
             break; 
+          
+          //clear  
+          case 2048:
+            currVal = 0;
+            module->setDisplayToDecNumber(currVal, 1 << 4);
+            SingleButtonPush(12);
+           break; 
+            //enter
+         case 8192:
+            currVal = 0;
+            module->setDisplayToDecNumber(currVal, 1 << 4);
+            SingleButtonPush(13);
+            break;
+             
           default:
             break;
      }
