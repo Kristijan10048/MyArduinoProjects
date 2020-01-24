@@ -4,7 +4,7 @@
 
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID, 
-  JOYSTICK_TYPE_MULTI_AXIS, 16, 0,
+  JOYSTICK_TYPE_MULTI_AXIS, 27, 0,
   true, true, false, false, false, false,
   true, true, false, false, false);
 
@@ -19,10 +19,17 @@ word mode;
 int currVal = -1;
 const int C_INT_MAX_VAL = 9999;
 
-
+// digital pin 2 has a pushbutton attached to it. Give it a name:
+#define pintBtn  11
+#define pintBtn  12
 
 void setup() 
 {
+  // make the pushbutton's pin an input:
+  // Initialize Button Pins
+  pinMode(pintBtn, INPUT_PULLUP);
+  pinMode(pintBtn, INPUT_PULLUP);
+  
   //init joystic lib
   Joystick.begin();
 
@@ -38,7 +45,7 @@ void setup()
 void SingleButtonPush(byte button)
 {
     Joystick.pressButton(button);
-    delay(500);
+    delay(250); //500
     Joystick.releaseButton(button ); 
 }
 
@@ -78,6 +85,8 @@ void PushBtnAndDisplayIt(TM1638QYF* module, byte buttonNo)
 
 void update(TM1638QYF* module, word* mode) 
 {
+
+  
   //get buttons state  
   word buttons = module->getButtons();  
 
@@ -168,7 +177,29 @@ void update(TM1638QYF* module, word* mode)
      }
   }
 }
+// Constant that maps the phyical pin to the joystick button.
+const int pinToButtonMap = 11;
 
+
+#define C_INT_MAX_BTNS 2
+
+// Last state of the button
+int lastButtonState[4] = {0,0,0,0};
 void loop() {
+
+  //qyf module
   update(&module, &mode);
+
+  // Read pin values
+  for (int index = 0; index < C_INT_MAX_BTNS; index++)
+  {
+    int currentButtonState = !digitalRead(index + pinToButtonMap);
+    if (currentButtonState != lastButtonState[index])
+    {
+      //Joystick.setButton(index, currentButtonState);
+      SingleButtonPush(17 + index );
+      lastButtonState[index] = currentButtonState;
+    }
+  }
+  delay(1); 
 }
