@@ -4,7 +4,7 @@
 
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID, 
-  JOYSTICK_TYPE_MULTI_AXIS, 27, 0,
+  JOYSTICK_TYPE_MULTI_AXIS, 30, 0,
   true, true, false, false, false, false,
   true, true, false, false, false);
 
@@ -19,16 +19,39 @@ word mode;
 int currVal = -1;
 const int C_INT_MAX_VAL = 9999;
 
-// digital pin 2 has a pushbutton attached to it. Give it a name:
-#define pintBtn  11
-#define pintBtn  12
+#define pintBtn0  0
+#define pintBtn1  1
+#define pintBtn2  2
+#define pintBtn3  3
+#define pintBtn4  4
+#define pintBtn5  5
+#define pintBtn6  6
+#define pintBtn7  7
+
+//
+#define pintBtn11  11
+#define pintBtn12  12
+#define pintBtn13  13
 
 void setup() 
 {
   // make the pushbutton's pin an input:
   // Initialize Button Pins
-  pinMode(pintBtn, INPUT_PULLUP);
-  pinMode(pintBtn, INPUT_PULLUP);
+  //bottom left column
+  pinMode(pintBtn0, INPUT_PULLUP);
+  pinMode(pintBtn1, INPUT_PULLUP);
+  pinMode(pintBtn2, INPUT_PULLUP);
+  pinMode(pintBtn3, INPUT_PULLUP);
+  pinMode(pintBtn4, INPUT_PULLUP);
+  pinMode(pintBtn5, INPUT_PULLUP);
+  pinMode(pintBtn6, INPUT_PULLUP);
+  pinMode(pintBtn7, INPUT_PULLUP);
+  
+  //top left pins column
+  pinMode(pintBtn11, INPUT_PULLUP);
+  pinMode(pintBtn12, INPUT_PULLUP);
+  pinMode(pintBtn13, INPUT_PULLUP);
+ 
   
   //init joystic lib
   Joystick.begin();
@@ -181,16 +204,23 @@ void update(TM1638QYF* module, word* mode)
 const int pinToButtonMap = 11;
 
 
-#define C_INT_MAX_BTNS 2
+#define C_INT_MAX_BTNS 3
 
 // Last state of the button
-int lastButtonState[4] = {0,0,0,0};
+int lastButtonState[C_INT_MAX_BTNS] = {0,0,0};
+
+
+#define C_INT_MAX_BOTTOM_COL_BTNS 8
+
+// Last state of the button
+int lastBottomRowButtonState[C_INT_MAX_BOTTOM_COL_BTNS] = {0,0,0,0,0,0,0,0};
+
 void loop() {
 
   //qyf module
   update(&module, &mode);
 
-  // Read pin values
+  // Read pin from 11 to 13 values
   for (int index = 0; index < C_INT_MAX_BTNS; index++)
   {
     int currentButtonState = !digitalRead(index + pinToButtonMap);
@@ -201,5 +231,21 @@ void loop() {
       lastButtonState[index] = currentButtonState;
     }
   }
+
+  Serial.print(digitalRead(4));
+  Serial.print("\n");
+  // Read pin from 0 to 8 values
+  for (int index = 0; index < C_INT_MAX_BOTTOM_COL_BTNS; index++)
+  {
+    int currentButtonState = !digitalRead(index);
+    if (currentButtonState != lastBottomRowButtonState[index])
+    {
+      //Joystick.setButton(index, currentButtonState);
+      SingleButtonPush(20 + index );
+      
+      lastBottomRowButtonState[index] = currentButtonState;
+    }
+  }
+  
   delay(1); 
 }
